@@ -466,6 +466,35 @@ async fn manager_without_cache_fetches_on_every_refresh() {
 }
 
 #[tokio::test]
+async fn provider_catalog_does_not_fall_back_to_unrelated_bundled_models_without_identity() {
+    let codex_home = tempdir().expect("temp dir");
+    let provider_models = vec![remote_model(
+        "provider-only",
+        "Provider",
+        /*priority*/ 0,
+    )];
+    let manager = OpenAiModelsManager::new_with_base_models_for_provider(
+        codex_home.path().to_path_buf(),
+        "provider-only".to_string(),
+        TestModelsEndpoint::new(Vec::new()),
+        None,
+        provider_models,
+    );
+    let expected = manager.base_models.clone();
+    assert!(expected.iter().any(|model| model.slug == "provider-only"));
+
+    // An unauthenticated endpoint has no matching catalog identity. Keep the
+    // selected provider's own fallback, not the unrelated global GPT catalog.
+    manager.remote_models.write().await.identity = None;
+    assert_eq!(manager.get_remote_models().await, expected);
+    assert_eq!(manager.try_get_remote_models().expect("unlocked"), expected);
+
+    // A stale cache from another identity must obey the same provider boundary.
+    manager.remote_models.write().await.identity = Some("other-provider".to_string());
+    assert_eq!(manager.get_remote_models().await, expected);
+}
+
+#[tokio::test]
 async fn injected_cache_hit_avoids_remote_fetch() {
     let cached_models = vec![remote_model("cached", "Cached", /*priority*/ 0)];
     let cache = TestModelsCache::with_entry(ModelsCacheEntry {

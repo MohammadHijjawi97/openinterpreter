@@ -505,7 +505,7 @@ impl ModelsManager for OpenAiModelsManager {
             if entry.identity.is_some() && entry.identity == self.endpoint_client.identity() {
                 entry.models.clone()
             } else {
-                load_remote_models_from_file().unwrap_or_default()
+                self.base_models.clone()
             }
         })
     }
@@ -516,7 +516,7 @@ impl ModelsManager for OpenAiModelsManager {
             if entry.identity.is_some() && entry.identity == self.endpoint_client.identity() {
                 entry.models.clone()
             } else {
-                load_remote_models_from_file().unwrap_or_default()
+                self.base_models.clone()
             },
         )
     }
