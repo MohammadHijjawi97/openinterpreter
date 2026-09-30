@@ -15,9 +15,9 @@ jobs:
   build-windows-binaries:
     name: Build Windows binaries - ${{ matrix.runner }} - ${{ matrix.target }} - ${{ matrix.bundle }}
     runs-on: ${{ matrix.runs_on }}
-    # Windows release builds can exceed an hour, so keep the timeout aligned
-    # with the top-level release build headroom.
-    timeout-minutes: 90
+    # The primary Windows release bundle can exceed 90 minutes even when the
+    # required PR architecture build passes; leave room to finish packaging.
+    timeout-minutes: 150
     permissions:
       contents: read
     defaults:
